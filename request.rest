@@ -1,0 +1,84 @@
+# ==========================================
+# AUTHENTICATION
+# Catatan: Eksekusi request /login terlebih dahulu agar cookie session 
+# tersimpan otomatis untuk request-request selanjutnya (butuh login).
+# ==========================================
+
+### Login Buyer
+POST http://localhost:5000/login
+Content-Type: application/json
+
+{
+    "email": "john.doe@example.com",
+    "password": "Password123"
+}
+
+### Login Admin
+POST http://localhost:5000/login
+Content-Type: application/json
+
+{
+    "email": "admin@example.com",
+    "password": "Password123"
+}
+
+### Login Seller
+POST http://localhost:5000/login
+Content-Type: application/json
+
+{
+    "email": "seller@example.com",
+    "password": "Password123"
+}
+
+### Login Driver
+POST http://localhost:5000/login
+Content-Type: application/json
+
+{
+    "email": "driver@example.com",
+    "password": "Password123"
+}
+
+### Get Current User (Me) - Butuh Login
+GET http://localhost:5000/me
+
+### Logout - Butuh Login
+DELETE http://localhost:5000/logout
+
+
+# ==========================================
+# USERS
+# ==========================================
+
+### Get All Users - Khusus ADMIN
+GET http://localhost:5000/users
+
+### Get User By ID - Butuh Login
+GET http://localhost:5000/users/1
+
+### Register User (Public)
+POST http://localhost:5000/users
+Content-Type: application/json
+
+{
+    "full_name": "John Doe",
+    "email": "john.doe@example.com",
+    "password": "Password123"
+}
+# Note: Role otomatis diset "USER" saat register
+
+### Update User - Butuh Login
+# User biasa hanya bisa update profil sendiri (tanpa role)
+# Admin bisa update siapa saja dan merubah role
+PATCH http://localhost:5000/users/1
+Content-Type: application/json
+
+{
+    "full_name": "Fauzi",
+    "email": "fauzi@example.com",
+    "role": "ADMIN" 
+}
+
+### Delete User - Khusus ADMIN
+DELETE http://localhost:5000/users/1

@@ -1,0 +1,1261 @@
+openapi: 3.0.0
+info:
+  title: SEAPEDIA
+  description: Dokumentasi API untuk platform e-commerce multi-role SEAPEDIA.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+paths:
+  /api/auth/register:
+    post:
+      summary: Registrasi Akun Pengguna
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - full_name
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: buyer1@test.com
+                password:
+                  type: string
+                  example: securepassword123
+                full_name:
+                  type: string
+                  example: Fauzi Buyer
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Validation error or Email already exists
+        '500':
+          description: Server error
+
+  /api/auth/login:
+    post:
+      summary: Login Pengguna
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: buyer1@test.com
+                password:
+                  type: string
+                  example: securepassword123
+      responses:
+        '200':
+          description: Login successful. Sets cookie session.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: Login berhasil
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Missing or invalid credentials
+        '401':
+          description: Invalid email or password
+
+  /api/auth/logout:
+    delete:
+      summary: Logout Pengguna
+      tags:
+        - Authentication
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Logout successful. Clears session.
+        '401':
+          description: Unauthorized
+
+  /api/auth/me:
+    get:
+      summary: Ambil Informasi Profil Sesi Aktif
+      tags:
+        - Authentication
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Returns logged-in user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /api/auth/select-role:
+    post:
+      summary: Pilih Peran Aktif untuk Sesi Saat Ini
+      tags:
+        - Authentication
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum: [BUYER, SELLER, DRIVER, ADMIN]
+                  example: BUYER
+      responses:
+        '200':
+          description: Role updated successfully
+        '400':
+          description: Invalid role or role not owned by user
+        '401':
+          description: Unauthorized
+
+  /api/users/me/dashboard-summary:
+    get:
+      summary: Ambil Ringkasan Dashboard Finansial & Fitur
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Detailed multi-role balance and status summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  buyer:
+                    type: object
+                    properties:
+                      walletBalance:
+                        type: number
+                      cartItemCount:
+                        type: integer
+                  seller:
+                    type: object
+                    nullable: true
+                    properties:
+                      store_name:
+                        type: string
+                      income:
+                        type: number
+                  driver:
+                    type: object
+                    properties:
+                      earnings:
+                        type: number
+                      hasActiveJob:
+                        type: boolean
+
+  /api/users:
+    get:
+      summary: Dapatkan Semua Pengguna (Admin Only)
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: List of all users
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Admin only)
+    post:
+      summary: Buat Pengguna Baru (Registration / Admin Creation)
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterInput'
+      responses:
+        '201':
+          description: User created
+
+  /api/users/{id}:
+    get:
+      summary: Ambil Pengguna Berdasarkan ID
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User data
+    patch:
+      summary: Perbarui Profil Pengguna
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+    delete:
+      summary: Hapus Pengguna (Admin Only)
+      tags:
+        - Users
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted
+
+  /api/stores:
+    get:
+      summary: Cari Toko Publik
+      tags:
+        - Stores
+      responses:
+        '200':
+          description: List of stores
+  /api/stores/{id}:
+    get:
+      summary: Detail Profil Toko Publik
+      tags:
+        - Stores
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Store details
+  /api/seller/store:
+    post:
+      summary: Buat Toko Baru (Seller Only)
+      tags:
+        - Stores
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - store_name
+              properties:
+                store_name:
+                  type: string
+                  example: My Store
+                description:
+                  type: string
+                address_detail:
+                  type: string
+      responses:
+        '201':
+          description: Store created
+    put:
+      summary: Perbarui Informasi Toko (Seller Only)
+      tags:
+        - Stores
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                store_name:
+                  type: string
+                description:
+                  type: string
+                address_detail:
+                  type: string
+      responses:
+        '200':
+          description: Store details updated
+
+  /api/products:
+    get:
+      summary: Katalog Produk Publik
+      tags:
+        - Products
+      responses:
+        '200':
+          description: List of public products
+  /api/products/{id}:
+    get:
+      summary: Detail Produk Publik
+      tags:
+        - Products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product details
+
+  /api/products/{id}/reviews:
+    get:
+      summary: Dapatkan Ulasan Produk (Publik)
+      tags:
+        - Products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of reviews for the product
+    post:
+      summary: Kirim Ulasan Produk (Hanya untuk Pembeli Terverifikasi)
+      tags:
+        - Products
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+                - comment
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Review created
+
+  /api/seller/products:
+    get:
+      summary: Dapatkan Semua Produk Milik Toko Seller
+      tags:
+        - Products
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Seller's products
+    post:
+      summary: Tambah Produk Baru (Seller Only)
+      tags:
+        - Products
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Product added
+
+  /api/seller/products/{id}:
+    put:
+      summary: Perbarui Produk (Seller Only)
+      tags:
+        - Products
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: Product updated
+    delete:
+      summary: Hapus Produk (Seller Only)
+      tags:
+        - Products
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product deleted
+
+  /api/buyer/cart:
+    get:
+      summary: Ambil Isi Keranjang Aktif (Buyer Only)
+      tags:
+        - Cart
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Cart items with single-store verification details
+    delete:
+      summary: Kosongkan Keranjang Belanja (Buyer Only)
+      tags:
+        - Cart
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Cart cleared
+
+  /api/buyer/cart/items:
+    post:
+      summary: Tambah Produk ke Keranjang (Buyer Only)
+      description: Harus mengikuti aturan single-store checkout. Produk dari toko lain akan direject.
+      tags:
+        - Cart
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - product_id
+                - quantity
+              properties:
+                product_id:
+                  type: string
+                  example: "1"
+                quantity:
+                  type: integer
+                  minimum: 1
+                  example: 1
+      responses:
+        '200':
+          description: Added to cart successfully
+        '400':
+          description: Single-store constraint violation or stock insufficient
+
+  /api/buyer/cart/items/{id}:
+    patch:
+      summary: Ubah Jumlah Produk di Keranjang (Buyer Only)
+      tags:
+        - Cart
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Quantity updated
+    delete:
+      summary: Hapus Item dari Keranjang (Buyer Only)
+      tags:
+        - Cart
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item removed
+
+  /api/buyer/addresses:
+    get:
+      summary: Dapatkan Alamat Pembeli (Buyer Only)
+      tags:
+        - Addresses
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: List of addresses
+    post:
+      summary: Tambah Alamat Pengiriman Baru (Buyer Only)
+      tags:
+        - Addresses
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressInput'
+      responses:
+        '201':
+          description: Address created
+
+  /api/buyer/addresses/{id}:
+    put:
+      summary: Ubah Alamat Pengiriman (Buyer Only)
+      tags:
+        - Addresses
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressInput'
+      responses:
+        '200':
+          description: Address updated
+    delete:
+      summary: Hapus Alamat Pengiriman (Buyer Only)
+      tags:
+        - Addresses
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Address deleted
+
+  /api/buyer/wallet:
+    get:
+      summary: Ambil Saldo Dompet Aktif
+      tags:
+        - Wallet
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Wallet balance details
+  /api/buyer/wallet/transactions:
+    get:
+      summary: Riwayat Transaksi Dompet
+      tags:
+        - Wallet
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Transaction history list
+  /api/buyer/wallet/topup:
+    post:
+      summary: Top-Up Saldo Dompet (Simulasi)
+      tags:
+        - Wallet
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: number
+                  minimum: 1000
+                  example: 100000
+      responses:
+        '200':
+          description: Topup successful
+
+  /api/buyer/checkout:
+    post:
+      summary: Melakukan Checkout Belanjaan (Buyer Only)
+      tags:
+        - Orders
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - address_id
+                - delivery_method
+              properties:
+                address_id:
+                  type: string
+                  example: "1"
+                delivery_method:
+                  type: string
+                  enum: [INSTANT, NEXT_DAY, REGULAR]
+                  example: REGULAR
+                discount_code:
+                  type: string
+                  example: DISKON20
+      responses:
+        '201':
+          description: Checkout successful. Order created.
+        '400':
+          description: Insufficient wallet balance or invalid discount code
+
+  /api/buyer/checkout/validate-discount:
+    post:
+      summary: Validasi Kode Voucher / Promo
+      tags:
+        - Orders
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  example: DISKON20
+      responses:
+        '200':
+          description: Code verified and details returned
+        '400':
+          description: Expired or invalid code
+
+  /api/buyer/orders:
+    get:
+      summary: Dapatkan Riwayat Pesanan Saya (Buyer Only)
+      tags:
+        - Orders
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Order list
+  /api/buyer/orders/{id}:
+    get:
+      summary: Detail Pesanan Pembeli (Buyer Only)
+      tags:
+        - Orders
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details with timeline
+
+  /api/buyer/reports/spending:
+    get:
+      summary: Laporan Pengeluaran Finansial Pembeli (Buyer Only)
+      tags:
+        - Orders
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Spending summary
+
+  /api/seller/orders:
+    get:
+      summary: Pesanan Masuk (Seller Only)
+      tags:
+        - Orders
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Incoming store orders
+  /api/seller/orders/{id}:
+    get:
+      summary: Detail Pesanan Toko (Seller Only)
+      tags:
+        - Orders
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+  /api/seller/orders/{id}/process:
+    post:
+      summary: Proses Pesanan dari PACKAGING ke WAITING_FOR_DRIVER (Seller Only)
+      tags:
+        - Orders
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order processed successfully
+  /api/seller/reports/income:
+    get:
+      summary: Laporan Pendapatan Finansial Penjual (Seller Only)
+      tags:
+        - Orders
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Store income summary
+
+  /api/driver/jobs:
+    get:
+      summary: Cari Pekerjaan Pengiriman yang Tersedia (Driver Only)
+      description: Menampilkan semua order berstatus WAITING_FOR_DRIVER.
+      tags:
+        - Drivers
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Available delivery jobs
+  /api/driver/jobs/{id}:
+    get:
+      summary: Detail Pekerjaan Pengiriman (Driver Only)
+      tags:
+        - Drivers
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job details
+  /api/driver/jobs/{id}/take:
+    post:
+      summary: Ambil Pekerjaan Pengiriman (Driver Only)
+      description: Status order berubah dari WAITING_FOR_DRIVER menjadi IN_DELIVERY. Terproteksi dari race condition.
+      tags:
+        - Drivers
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job claimed successfully
+        '400':
+          description: Job already taken by another driver or invalid state
+  /api/driver/jobs/{id}/complete:
+    post:
+      summary: Konfirmasi Pengiriman Selesai (Driver Only)
+      description: Status order berubah dari IN_DELIVERY menjadi COMPLETED. Pendapatan driver (80% ongkir) ditambahkan.
+      tags:
+        - Drivers
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Delivery marked as completed successfully
+  /api/driver/jobs/history:
+    get:
+      summary: Riwayat Pekerjaan Driver Selesai (Driver Only)
+      tags:
+        - Drivers
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Driver job history
+  /api/driver/earnings:
+    get:
+      summary: Ringkasan Penghasilan Driver (Driver Only)
+      tags:
+        - Drivers
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Drivers total earnings and job completion summary
+
+  /api/reviews:
+    get:
+      summary: Ambil Semua Review Pengalaman Web/Aplikasi Publik
+      tags:
+        - Reviews
+      responses:
+        '200':
+          description: Public reviews list
+    post:
+      summary: Tulis Review Publik tentang Web/Aplikasi
+      tags:
+        - Reviews
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+                - reviewer_name
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 5
+                reviewer_name:
+                  type: string
+                  example: TamuAnonim
+                comment:
+                  type: string
+                  example: Desain webnya sangat responsif dan premium!
+      responses:
+        '201':
+          description: Review created
+
+  /api/admin/monitoring/users:
+    get:
+      summary: Monitor Semua Pengguna (Admin Only)
+      tags:
+        - Admin Monitoring
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Users database overview
+  /api/admin/monitoring/stores:
+    get:
+      summary: Monitor Semua Toko Penjual (Admin Only)
+      tags:
+        - Admin Monitoring
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Stores overview
+  /api/admin/monitoring/products:
+    get:
+      summary: Monitor Semua Produk (Admin Only)
+      tags:
+        - Admin Monitoring
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Products overview
+  /api/admin/monitoring/orders:
+    get:
+      summary: Monitor Semua Transaksi Order (Admin Only)
+      tags:
+        - Admin Monitoring
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Orders overview
+  /api/admin/monitoring/discounts:
+    get:
+      summary: Monitor Voucher dan Promo (Admin Only)
+      tags:
+        - Admin Monitoring
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Active discount coupons overview
+  /api/admin/monitoring/deliveries:
+    get:
+      summary: Monitor Semua Pekerjaan Pengiriman (Admin Only)
+      tags:
+        - Admin Monitoring
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Delivery jobs overview
+  /api/admin/monitoring/overdue:
+    get:
+      summary: Monitor Order Terlambat (Admin Only)
+      tags:
+        - Admin Monitoring
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Overdue orders list
+
+  /api/admin/vouchers:
+    post:
+      summary: Buat Voucher Baru (Admin Only)
+      tags:
+        - Admin Settings
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoucherInput'
+      responses:
+        '201':
+          description: Voucher generated
+    get:
+      summary: Ambil Semua Voucher (Admin Only)
+      tags:
+        - Admin Settings
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: List of vouchers
+
+  /api/admin/promos:
+    post:
+      summary: Buat Promo Baru (Admin Only)
+      tags:
+        - Admin Settings
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromoInput'
+      responses:
+        '201':
+          description: Promo generated
+    get:
+      summary: Ambil Semua Promo (Admin Only)
+      tags:
+        - Admin Settings
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: List of promos
+
+  /api/admin/system/advance-time:
+    post:
+      summary: Pemicu Majukan Waktu Sistem (Admin Only)
+      description: Mensimulasikan bertambahnya hari/waktu untuk pengujian SLA pesanan terlambat.
+      tags:
+        - Admin Settings
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - days
+                - hours
+              properties:
+                days:
+                  type: integer
+                  minimum: 0
+                  example: 1
+                hours:
+                  type: integer
+                  minimum: 0
+                  example: 0
+      responses:
+        '200':
+          description: System time successfully advanced
+
+  /api/admin/system/run-overdue-check:
+    post:
+      summary: Pemicu Cek Keterlambatan Pesanan Terotomatis (Admin Only)
+      description: Memicu pemeriksaan SLA pesanan. Pesanan yang melewati batas waktu dikembalikan (auto-refund/return) menjadi status RETURNED.
+      tags:
+        - Admin Settings
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Overdue check completed successfully
+
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        full_name:
+          type: string
+          example: Fauzi Buyer
+        email:
+          type: string
+          format: email
+          example: buyer1@test.com
+        activeRole:
+          type: string
+          example: BUYER
+        roles:
+          type: array
+          items:
+            type: string
+          example: [BUYER, SELLER]
+    UserRegisterInput:
+      type: object
+      required:
+        - email
+        - password
+        - full_name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        full_name:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [BUYER, SELLER, DRIVER, ADMIN]
+          example: [BUYER]
+    ProductInput:
+      type: object
+      required:
+        - name
+        - price
+        - stock
+      properties:
+        name:
+          type: string
+          example: Kabel Charger Type-C Premium
+        description:
+          type: string
+          example: Kabel data berkecepatan tinggi berlapis nilon.
+        price:
+          type: number
+          example: 49000
+        stock:
+          type: integer
+          example: 50
+        category:
+          type: string
+          example: Elektronik
+        images:
+          type: array
+          items:
+            type: string
+          example: ["https://example.com/image.webp"]
+    AddressInput:
+      type: object
+      required:
+        - recipient_name
+        - phone
+        - address_detail
+      properties:
+        recipient_name:
+          type: string
+          example: Fauzi
+        phone:
+          type: string
+          example: "08123456789"
+        address_detail:
+          type: string
+          example: Jl. Raya Melati No. 42, Jakarta Selatan
+        is_default:
+          type: boolean
+          example: true
+    VoucherInput:
+      type: object
+      required:
+        - name
+        - code
+        - discount_type
+        - discount_value
+        - remaining_usage
+        - expiry_date
+      properties:
+        name:
+          type: string
+          example: Voucher Diskon Baru
+        code:
+          type: string
+          example: BARU20
+        discount_type:
+          type: string
+          enum: [PERCENTAGE, FIXED]
+          example: PERCENTAGE
+        discount_value:
+          type: number
+          example: 20
+        remaining_usage:
+          type: integer
+          example: 100
+        expiry_date:
+          type: string
+          format: date-time
+          example: "2026-12-31T23:59:59Z"
+    PromoInput:
+      type: object
+      required:
+        - name
+        - code
+        - discount_type
+        - discount_value
+        - expiry_date
+      properties:
+        name:
+          type: string
+          example: Promo Akhir Tahun
+        code:
+          type: string
+          example: YEAREND
+        discount_type:
+          type: string
+          enum: [PERCENTAGE, FIXED]
+          example: FIXED
+        discount_value:
+          type: number
+          example: 50000
+        expiry_date:
+          type: string
+          format: date-time
+          example: "2026-12-31T23:59:59Z"

@@ -1,0 +1,366 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum RoleType {
+  BUYER
+  SELLER
+  DRIVER
+  ADMIN
+}
+
+enum WalletTransactionType {
+  TOPUP
+  PAYMENT
+  REFUND
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum DeliveryMethod {
+  INSTANT
+  NEXT_DAY
+  REGULAR
+}
+
+enum OrderStatus {
+  PACKAGING
+  WAITING_FOR_DRIVER
+  IN_DELIVERY
+  COMPLETED
+  RETURNED
+}
+
+enum DeliveryJobStatus {
+  AVAILABLE
+  TAKEN
+  COMPLETED
+}
+
+model Role {
+  id   BigInt   @id @default(autoincrement())
+  name RoleType
+
+  users_with_active_role User[]     @relation("ActiveRole")
+  user_roles             UserRole[]
+
+  @@map("roles")
+}
+
+model User {
+  id             BigInt   @id @default(autoincrement())
+  full_name      String?  @db.VarChar(100)
+  email          String   @unique @db.VarChar(100)
+  password       String   @db.VarChar(255)
+  active_role_id BigInt?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  active_role   Role?         @relation("ActiveRole", fields: [active_role_id], references: [id])
+  user_roles    UserRole[]
+  reviews       Review[]
+  store          Store?        @relation("UserStores")
+  addresses     Address[]
+  wallet        Wallet?
+  cart          Cart?
+  orders        Order[]       @relation("OrderBuyer")
+  delivery_jobs DeliveryJob[] @relation("DriverJobs")
+  product_reviews ProductReview[] @relation("ProductReviewBuyer")
+
+  @@map("users")
+}
+
+model UserRole {
+  user_id BigInt
+  role_id BigInt
+
+  user User @relation(fields: [user_id], references: [id])
+  role Role @relation(fields: [role_id], references: [id])
+
+  @@id([user_id, role_id])
+  @@map("user_roles")
+}
+
+model Review {
+  id            BigInt   @id @default(autoincrement())
+  user_id       BigInt?
+  reviewer_name String?  @db.VarChar(100)
+  rating        Int      @db.SmallInt
+  comment       String?  @db.Text
+  created_at    DateTime @default(now())
+
+  user User? @relation(fields: [user_id], references: [id])
+
+  @@map("reviews")
+}
+
+model Store {
+  id             BigInt   @id @default(autoincrement())
+  seller_id      BigInt   @unique
+  store_name     String   @unique @db.VarChar(100)
+  description    String?  @db.Text
+  address_detail String?  @db.Text
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  seller   User      @relation("UserStores", fields: [seller_id], references: [id])
+  products Product[]
+  carts    Cart[]
+  orders   Order[]
+
+  @@map("stores")
+}
+
+model Product {
+  id          BigInt   @id @default(autoincrement())
+  store_id    BigInt
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(15, 2)
+  stock       Int
+  category    String   @default("Jelajahi") @db.VarChar(100)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  store       Store          @relation(fields: [store_id], references: [id])
+  cart_items  CartItem[]
+  order_items OrderItem[]
+  images      ProductImage[]
+  reviews     ProductReview[]
+
+  @@index([store_id])
+  @@map("products")
+}
+
+model ProductImage {
+  id         BigInt   @id @default(autoincrement())
+  product_id BigInt
+  image_url  String   @db.VarChar(255)
+  created_at DateTime @default(now())
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id])
+  @@map("product_images")
+}
+
+model Address {
+  id             BigInt  @id @default(autoincrement())
+  buyer_id       BigInt
+  recipient_name String  @db.VarChar(100)
+  phone          String  @db.VarChar(20)
+  address_detail String  @db.Text
+  is_default     Boolean
+
+  buyer  User    @relation(fields: [buyer_id], references: [id])
+  orders Order[]
+
+  @@index([buyer_id])
+  @@map("addresses")
+}
+
+model Wallet {
+  id         BigInt   @id @default(autoincrement())
+  user_id    BigInt   @unique
+  balance    Decimal  @db.Decimal(15, 2)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user                User                @relation(fields: [user_id], references: [id])
+  wallet_transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id          BigInt                @id @default(autoincrement())
+  wallet_id   BigInt
+  type        WalletTransactionType
+  amount      Decimal               @db.Decimal(15, 2)
+  description String?               @db.VarChar(255)
+  created_at  DateTime              @default(now())
+
+  wallet Wallet @relation(fields: [wallet_id], references: [id])
+
+  @@index([wallet_id])
+  @@map("wallet_transactions")
+}
+
+model Cart {
+  id         BigInt   @id @default(autoincrement())
+  buyer_id   BigInt   @unique
+  store_id   BigInt
+  created_at DateTime @default(now())
+
+  buyer      User       @relation(fields: [buyer_id], references: [id])
+  store      Store      @relation(fields: [store_id], references: [id])
+  cart_items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id         BigInt @id @default(autoincrement())
+  cart_id    BigInt
+  product_id BigInt
+  quantity   Int
+
+  cart    Cart    @relation(fields: [cart_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@index([cart_id])
+  @@index([product_id])
+  @@map("cart_items")
+}
+
+model Voucher {
+  id              BigInt       @id @default(autoincrement())
+  name            String       @db.VarChar(100)
+  code            String       @unique @db.VarChar(50)
+  discount_type   DiscountType
+  discount_value  Decimal      @db.Decimal(15, 2)
+  remaining_usage Int
+  expiry_date     DateTime
+  created_at      DateTime     @default(now())
+
+  orders Order[]
+
+  @@map("vouchers")
+}
+
+model Promo {
+  id             BigInt       @id @default(autoincrement())
+  name           String       @db.VarChar(100)
+  code           String       @unique @db.VarChar(50)
+  discount_type  DiscountType
+  discount_value Decimal      @db.Decimal(15, 2)
+  expiry_date    DateTime
+  created_at     DateTime     @default(now())
+
+  orders Order[]
+
+  @@map("promos")
+}
+
+model Order {
+  id                      BigInt         @id @default(autoincrement())
+  buyer_id                BigInt
+  store_id                BigInt
+  address_id              BigInt
+  voucher_id              BigInt?
+  promo_id                BigInt?
+  shipping_recipient_name String         @db.VarChar(100)
+  shipping_phone          String         @db.VarChar(20)
+  shipping_address        String         @db.Text
+  delivery_method         DeliveryMethod
+  subtotal                Decimal        @db.Decimal(15, 2)
+  discount_amount         Decimal        @db.Decimal(15, 2)
+  delivery_fee            Decimal        @db.Decimal(15, 2)
+  ppn_amount              Decimal        @db.Decimal(15, 2)
+  final_total             Decimal        @db.Decimal(15, 2)
+  status                  OrderStatus
+  created_at              DateTime       @default(now())
+  expired_at              DateTime
+  returned_at             DateTime?
+
+  buyer                  User                 @relation("OrderBuyer", fields: [buyer_id], references: [id])
+  store                  Store                @relation(fields: [store_id], references: [id])
+  address                Address              @relation(fields: [address_id], references: [id])
+  voucher                Voucher?             @relation(fields: [voucher_id], references: [id])
+  promo                  Promo?               @relation(fields: [promo_id], references: [id])
+  order_items            OrderItem[]
+  order_status_histories OrderStatusHistory[]
+  delivery_job           DeliveryJob?
+
+  @@index([buyer_id])
+  @@index([store_id])
+  @@index([status])
+  @@index([expired_at])
+  @@map("orders")
+}
+
+model OrderItem {
+  id           BigInt  @id @default(autoincrement())
+  order_id     BigInt
+  product_id   BigInt
+  product_name String  @db.VarChar(100)
+  price        Decimal @db.Decimal(15, 2)
+  quantity     Int
+  subtotal     Decimal @db.Decimal(15, 2)
+
+  order   Order   @relation(fields: [order_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@index([order_id])
+  @@index([product_id])
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id         BigInt      @id @default(autoincrement())
+  order_id   BigInt
+  status     OrderStatus
+  notes      String?     @db.Text
+  created_at DateTime    @default(now())
+
+  order Order @relation(fields: [order_id], references: [id])
+
+  @@map("order_status_histories")
+}
+
+model DeliveryJob {
+  id           BigInt            @id @default(autoincrement())
+  order_id     BigInt            @unique
+  driver_id    BigInt?
+  earning      Decimal           @db.Decimal(15, 2)
+  status       DeliveryJobStatus
+  taken_at     DateTime?
+  completed_at DateTime?
+
+  // Relations
+  order  Order @relation(fields: [order_id], references: [id])
+  driver User? @relation("DriverJobs", fields: [driver_id], references: [id])
+
+  @@index([driver_id])
+  @@map("delivery_jobs")
+}
+
+model SystemSetting {
+  id               BigInt   @id @default(autoincrement())
+  current_datetime DateTime
+  updated_at       DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+}
+
+model ProductReview {
+  id          BigInt   @id @default(autoincrement())
+  product_id  BigInt
+  buyer_id    BigInt
+  rating      Int      @db.SmallInt
+  comment     String?  @db.Text
+  created_at  DateTime @default(now())
+
+  product     Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  buyer       User     @relation("ProductReviewBuyer", fields: [buyer_id], references: [id])
+
+  @@index([product_id])
+  @@index([buyer_id])
+  @@map("product_reviews")
+}
