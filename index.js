@@ -28,6 +28,7 @@ BigInt.prototype.toJSON = function () {
 };
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 const store = new PrismaSessionStore(
@@ -99,7 +100,12 @@ app.use('/api', orderRoutes);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const openapiContent = fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8');
+let openapiContent = '';
+try {
+    openapiContent = fs.readFileSync(path.join(__dirname, 'openapi.yaml'), 'utf8');
+} catch (err) {
+    console.error('openapi.yaml error:', err.message);
+}
 
 app.get('/openapi.yaml', (req, res) => {
     res.setHeader('Content-Type', 'text/yaml');
