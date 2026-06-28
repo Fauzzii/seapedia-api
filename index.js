@@ -139,6 +139,10 @@ app.get('/api-docs', (req, res) => {
     `);
 });
 
+app.get('/', (req, res) => {
+    res.status(200).json({ msg: "sudah terhubung" });
+});
+
 app.use((req, res) => {
     res.status(404).json({ msg: `Endpoint '${req.method} ${req.path}' tidak ditemukan` });
 });
