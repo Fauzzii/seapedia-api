@@ -140,7 +140,13 @@ app.get('/api-docs', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.status(200).json({ msg: "sudah terhubung" });
+    res.status(200).json({
+        status: "healthy",
+        message: "Seapedia API Server is running and connected successfully.",
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        documentation: "/api-docs"
+    });
 });
 
 app.use((req, res) => {
