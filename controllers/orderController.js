@@ -273,6 +273,9 @@ export const checkout = async (req, res) => {
             });
 
             return newOrder;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(201).json({ msg: "Checkout berhasil", order: result });
