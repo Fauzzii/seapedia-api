@@ -674,7 +674,6 @@ export const returnOrder = async (req, res) => {
             if (order.buyer_id !== buyerId) throw new Error("Anda tidak berhak mengembalikan pesanan ini");
             if (order.status !== 'COMPLETED') throw new Error("Hanya pesanan yang sudah selesai (COMPLETED) yang dapat dikembalikan");
 
-            // Update order status to RETURNED
             const updatedOrder = await tx.order.update({
                 where: { id: orderId },
                 data: { 
@@ -683,7 +682,6 @@ export const returnOrder = async (req, res) => {
                 }
             });
 
-            // Add OrderStatusHistory
             await tx.orderStatusHistory.create({
                 data: {
                     order_id: orderId,
@@ -692,10 +690,8 @@ export const returnOrder = async (req, res) => {
                 }
             });
 
-            // Calculate refund amount: subtotal - discount_amount + PPN 12% (without delivery_fee)
             const productRefundAmount = parseFloat(order.subtotal) - parseFloat(order.discount_amount) + parseFloat(order.ppn_amount);
 
-            // Refund to buyer's wallet
             let buyerWallet = await tx.wallet.findUnique({ where: { user_id: buyerId } });
             if (!buyerWallet) {
                 buyerWallet = await tx.wallet.create({ data: { user_id: buyerId, balance: 0.00 } });
@@ -713,7 +709,6 @@ export const returnOrder = async (req, res) => {
                 }
             });
 
-            // Deduct seller's wallet
             const sellerId = order.store.seller_id;
             let sellerWallet = await tx.wallet.findUnique({ where: { user_id: sellerId } });
             if (sellerWallet) {
@@ -732,7 +727,6 @@ export const returnOrder = async (req, res) => {
                 });
             }
 
-            // Return items to seller stock
             for (const item of order.order_items) {
                 await tx.product.update({
                     where: { id: item.product_id },
