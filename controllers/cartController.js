@@ -33,6 +33,9 @@ export const addToCart = async (req, res) => {
     try {
         const productId = BigInt(req.body.product_id);
         const quantity = parseInt(req.body.quantity);
+        if (isNaN(quantity) || quantity < 1) {
+            return res.status(400).json({ msg: "Kuantitas barang harus minimal 1" });
+        }
 
         const product = await prisma.product.findUnique({
             where: { id: productId }
@@ -96,6 +99,9 @@ export const updateCartItem = async (req, res) => {
     try {
         const cartItemId = BigInt(req.params.id);
         const quantity = parseInt(req.body.quantity);
+        if (isNaN(quantity) || quantity < 1) {
+            return res.status(400).json({ msg: "Kuantitas barang harus minimal 1" });
+        }
 
         const cartItem = await prisma.cartItem.findUnique({
             where: { id: cartItemId },

@@ -657,3 +657,97 @@ export const verifyFailed = async (req, res) => {
         handleError(res, error, 400);
     }
 };
+
+export const returnOrder = async (req, res) => {
+    try {
+        const orderId = BigInt(req.params.id);
+        const buyerId = req.userId;
+        const now = await getCurrentTime();
+
+        const result = await prisma.$transaction(async (tx) => {
+            const order = await tx.order.findUnique({
+                where: { id: orderId },
+                include: { order_items: true, store: true }
+            });
+
+            if (!order) throw new Error("Pesanan tidak ditemukan");
+            if (order.buyer_id !== buyerId) throw new Error("Anda tidak berhak mengembalikan pesanan ini");
+            if (order.status !== 'COMPLETED') throw new Error("Hanya pesanan yang sudah selesai (COMPLETED) yang dapat dikembalikan");
+
+            // Update order status to RETURNED
+            const updatedOrder = await tx.order.update({
+                where: { id: orderId },
+                data: { 
+                    status: 'RETURNED',
+                    returned_at: now
+                }
+            });
+
+            // Add OrderStatusHistory
+            await tx.orderStatusHistory.create({
+                data: {
+                    order_id: orderId,
+                    status: 'RETURNED',
+                    notes: "Pembeli mengembalikan barang (retur). Pengembalian dana diproses otomatis."
+                }
+            });
+
+            // Calculate refund amount: subtotal - discount_amount + PPN 12% (without delivery_fee)
+            const productRefundAmount = parseFloat(order.subtotal) - parseFloat(order.discount_amount) + parseFloat(order.ppn_amount);
+
+            // Refund to buyer's wallet
+            let buyerWallet = await tx.wallet.findUnique({ where: { user_id: buyerId } });
+            if (!buyerWallet) {
+                buyerWallet = await tx.wallet.create({ data: { user_id: buyerId, balance: 0.00 } });
+            }
+            await tx.wallet.update({
+                where: { id: buyerWallet.id },
+                data: { balance: { increment: productRefundAmount } }
+            });
+            await tx.walletTransaction.create({
+                data: {
+                    wallet_id: buyerWallet.id,
+                    type: 'REFUND',
+                    amount: productRefundAmount,
+                    description: `Pengembalian dana retur barang pesanan ID ${orderId}`
+                }
+            });
+
+            // Deduct seller's wallet
+            const sellerId = order.store.seller_id;
+            let sellerWallet = await tx.wallet.findUnique({ where: { user_id: sellerId } });
+            if (sellerWallet) {
+                const sellerDeduction = parseFloat(order.subtotal) - parseFloat(order.discount_amount);
+                await tx.wallet.update({
+                    where: { id: sellerWallet.id },
+                    data: { balance: { decrement: sellerDeduction } }
+                });
+                await tx.walletTransaction.create({
+                    data: {
+                        wallet_id: sellerWallet.id,
+                        type: 'PAYMENT',
+                        amount: sellerDeduction,
+                        description: `Pendapatan ditarik kembali akibat retur pesanan ID ${orderId}`
+                    }
+                });
+            }
+
+            // Return items to seller stock
+            for (const item of order.order_items) {
+                await tx.product.update({
+                    where: { id: item.product_id },
+                    data: { stock: { increment: item.quantity } }
+                });
+            }
+
+            return updatedOrder;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
+        });
+
+        res.status(200).json({ msg: "Pesanan berhasil dikembalikan. Dana (di luar ongkir) telah dikembalikan ke wallet Anda.", order: result });
+    } catch (error) {
+        handleError(res, error, 400);
+    }
+};

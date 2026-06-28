@@ -1,5 +1,6 @@
 import prisma from '../config/prisma.js';
 import { handleError } from '../utils/errorHandler.js';
+import { sanitizeText } from '../utils/sanitizer.js';
 
 export const getAddresses = async (req, res) => {
     try {
@@ -35,9 +36,9 @@ export const createAddress = async (req, res) => {
             const address = await tx.address.create({
                 data: {
                     buyer_id,
-                    recipient_name,
+                    recipient_name: sanitizeText(recipient_name),
                     phone,
-                    address_detail,
+                    address_detail: sanitizeText(address_detail),
                     is_default: shouldBeDefault
                 }
             });
@@ -80,9 +81,9 @@ export const updateAddress = async (req, res) => {
             const updated = await tx.address.update({
                 where: { id: addressId },
                 data: {
-                    recipient_name: recipient_name || address.recipient_name,
+                    recipient_name: recipient_name ? sanitizeText(recipient_name) : address.recipient_name,
                     phone: phone || address.phone,
-                    address_detail: address_detail || address.address_detail,
+                    address_detail: address_detail ? sanitizeText(address_detail) : address.address_detail,
                     is_default: defaultFlag || address.is_default
                 }
             });

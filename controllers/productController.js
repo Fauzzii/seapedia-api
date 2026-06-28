@@ -156,12 +156,22 @@ export const createProduct = async (req, res) => {
         const sanitizedDesc = description ? sanitizeText(description) : null;
         const sanitizedCategory = category ? sanitizeText(category) : "Jelajahi";
 
+        const parsedPrice = parseFloat(price);
+        const parsedStock = parseInt(stock);
+
+        if (isNaN(parsedPrice) || parsedPrice <= 0) {
+            return res.status(400).json({ msg: "Harga produk harus berupa angka positif lebih besar dari 0" });
+        }
+        if (isNaN(parsedStock) || parsedStock < 0) {
+            return res.status(400).json({ msg: "Stok produk tidak boleh bernilai negatif" });
+        }
+
         const productData = {
             store_id: store.id,
             name: sanitizedName,
             description: sanitizedDesc,
-            price: parseFloat(price),
-            stock: parseInt(stock),
+            price: parsedPrice,
+            stock: parsedStock,
             category: sanitizedCategory
         };
 
@@ -200,8 +210,20 @@ export const updateProduct = async (req, res) => {
         const updateData = {};
         if (name !== undefined) updateData.name = sanitizeText(name);
         if (description !== undefined) updateData.description = description ? sanitizeText(description) : null;
-        if (price !== undefined) updateData.price = parseFloat(price);
-        if (stock !== undefined) updateData.stock = parseInt(stock);
+        if (price !== undefined) {
+            const parsedPrice = parseFloat(price);
+            if (isNaN(parsedPrice) || parsedPrice <= 0) {
+                return res.status(400).json({ msg: "Harga produk harus berupa angka positif lebih besar dari 0" });
+            }
+            updateData.price = parsedPrice;
+        }
+        if (stock !== undefined) {
+            const parsedStock = parseInt(stock);
+            if (isNaN(parsedStock) || parsedStock < 0) {
+                return res.status(400).json({ msg: "Stok produk tidak boleh bernilai negatif" });
+            }
+            updateData.stock = parsedStock;
+        }
         if (category !== undefined) updateData.category = category ? sanitizeText(category) : "Jelajahi";
 
         if (images !== undefined) {

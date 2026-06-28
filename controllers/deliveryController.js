@@ -123,7 +123,7 @@ export const completeJob = async (req, res) => {
                 include: { store: true }
             });
 
-            if (order && order.status !== 'COMPLETED' && order.status !== 'RETURNED' && order.status !== 'CANCELLED') {
+            if (order && order.status !== 'COMPLETED' && order.status !== 'RETURNED') {
                 await tx.order.update({
                     where: { id: order.id },
                     data: { status: 'COMPLETED' }

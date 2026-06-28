@@ -43,6 +43,9 @@ export const getWalletTransactions = async (req, res) => {
 export const topupWallet = async (req, res) => {
     try {
         const amount = parseFloat(req.body.amount);
+        if (isNaN(amount) || amount <= 0) {
+            return res.status(400).json({ msg: "Jumlah top-up harus berupa angka positif dan lebih besar dari 0" });
+        }
 
         const result = await prisma.$transaction(async (tx) => {
             let wallet = await tx.wallet.findUnique({

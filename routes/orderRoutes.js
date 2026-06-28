@@ -9,7 +9,8 @@ import {
     getSpendingReport, 
     getIncomeReport,
     verifySuccess,
-    verifyFailed
+    verifyFailed,
+    returnOrder
 } from '../controllers/orderController.js';
 import { verifyUser, requireActiveRole } from '../middleware/AuthUser.js';
 import { validateCheckout } from '../middleware/validators/orderValidator.js';
@@ -28,6 +29,7 @@ router.get('/buyer/orders', requireActiveRole('BUYER'), getOrders);
 router.get('/buyer/orders/:id', requireActiveRole('BUYER'), getOrderById);
 router.post('/buyer/orders/:id/verify-success', requireActiveRole('BUYER'), verifySuccess);
 router.post('/buyer/orders/:id/verify-failed', requireActiveRole('BUYER'), verifyFailed);
+router.post('/buyer/orders/:id/return', requireActiveRole('BUYER'), returnOrder);
 router.get('/buyer/reports/spending', requireActiveRole('BUYER'), getSpendingReport);
 
 // Seller Order routes

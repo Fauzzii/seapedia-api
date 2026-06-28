@@ -146,13 +146,26 @@ export const createVoucher = async (req, res) => {
             return res.status(400).json({ msg: "Semua field voucher wajib diisi" });
         }
 
+        const parsedValue = parseFloat(discount_value);
+        const parsedUsage = parseInt(remaining_usage);
+
+        if (isNaN(parsedValue) || parsedValue <= 0) {
+            return res.status(400).json({ msg: "Nilai potongan harus lebih besar dari 0" });
+        }
+        if (discount_type === 'PERCENTAGE' && parsedValue > 100) {
+            return res.status(400).json({ msg: "Persentase potongan tidak boleh melebihi 100%" });
+        }
+        if (isNaN(parsedUsage) || parsedUsage < 1) {
+            return res.status(400).json({ msg: "Kuota penggunaan voucher minimal harus 1" });
+        }
+
         const voucher = await prisma.voucher.create({
             data: {
                 name,
                 code,
                 discount_type,
-                discount_value: parseFloat(discount_value),
-                remaining_usage: parseInt(remaining_usage),
+                discount_value: parsedValue,
+                remaining_usage: parsedUsage,
                 expiry_date: new Date(expiry_date)
             }
         });
@@ -190,12 +203,21 @@ export const createPromo = async (req, res) => {
             return res.status(400).json({ msg: "Semua field promo wajib diisi" });
         }
 
+        const parsedValue = parseFloat(discount_value);
+
+        if (isNaN(parsedValue) || parsedValue <= 0) {
+            return res.status(400).json({ msg: "Nilai potongan harus lebih besar dari 0" });
+        }
+        if (discount_type === 'PERCENTAGE' && parsedValue > 100) {
+            return res.status(400).json({ msg: "Persentase potongan tidak boleh melebihi 100%" });
+        }
+
         const promo = await prisma.promo.create({
             data: {
                 name,
                 code,
                 discount_type,
-                discount_value: parseFloat(discount_value),
+                discount_value: parsedValue,
                 expiry_date: new Date(expiry_date)
             }
         });
