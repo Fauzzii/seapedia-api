@@ -57,11 +57,14 @@ Status pesanan berjalan mengikuti diagram state machine berikut:
 
 ```
 [PACKAGING] ➔ [WAITING_FOR_DRIVER] ➔ [IN_DELIVERY] ➔ [COMPLETED] (Via Driver / Buyer)
-                                                   ➔ [RETURNED] (Jika Overdue SLA)
+                                                   ➔ [RETURNED] (Jika Overdue SLA atau Retur Manual)
 ```
 
 ### Konfirmasi Penyelesaian & Payout Langsung:
 Ketika Kurir (*Driver*) menyelesaikan tugas pengiriman (`completeJob`), status pesanan langsung berubah menjadi `COMPLETED` dan saldo pendapatan otomatis dirilis ke dompet Kurir (80% ongkir) dan Penjual (100% harga barang setelah diskon). Pilihan verifikasi penerimaan oleh Pembeli juga tersedia untuk merilis dana jika kurir belum memperbarui tugasnya.
+
+### Pengembalian Barang (Retur Manual):
+Pembeli dapat mengajukan retur secara manual pada pesanan yang sudah berstatus selesai (`COMPLETED`). Tindakan ini akan secara otomatis mendebit saldo Penjual, melakukan pengembalian dana (*refund*) senilai total produk + PPN ke dompet Pembeli, dan mengembalikan stok barang ke inventaris toko Penjual. Status pesanan kemudian diperbarui menjadi `RETURNED`.
 
 ### Batas Waktu SLA Overdue per Metode Pengiriman:
 *   **INSTANT**: Batas waktu pengemasan hingga pengiriman selesai adalah **3 Jam**.
