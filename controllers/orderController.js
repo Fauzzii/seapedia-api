@@ -184,10 +184,17 @@ export const checkout = async (req, res) => {
 
             const finalTotal = netAmount + deliveryFee + ppnAmount;
 
-            const wallet = await tx.wallet.findUnique({
+            let wallet = await tx.wallet.findUnique({
                 where: { user_id: req.userId }
             });
-            if (!wallet) throw new Error("Dompet (Wallet) tidak ditemukan");
+            if (!wallet) {
+                wallet = await tx.wallet.create({
+                    data: {
+                        user_id: req.userId,
+                        balance: 0.00
+                    }
+                });
+            }
             if (parseFloat(wallet.balance) < finalTotal) {
                 throw new Error("Saldo dompet tidak mencukupi (Butuh: Rp" + finalTotal.toLocaleString() + ", Saldo Anda: Rp" + parseFloat(wallet.balance).toLocaleString() + ")");
             }

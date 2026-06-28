@@ -25,12 +25,11 @@ export const handleError = (res, error, defaultStatus = 500) => {
         });
     }
 
-    const isCustomError = error.message && 
-        !error.stack?.includes('node_modules\\@prisma') && 
-        !error.stack?.includes('node_modules/@prisma') &&
-        !error.stack?.includes('PrismaClient');
+    const isPrismaError = error.name?.startsWith('Prisma') || 
+                          error.constructor?.name?.startsWith('Prisma') ||
+                          error.code?.startsWith('P');
         
-    if (isCustomError) {
+    if (error.message && !isPrismaError) {
         return res.status(400).json({ msg: error.message });
     }
 
