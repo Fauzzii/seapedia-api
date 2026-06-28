@@ -175,6 +175,9 @@ export const completeJob = async (req, res) => {
             }
 
             return completedJob;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(200).json({ msg: "Pengantaran selesai. Pesanan telah berhasil diselesaikan.", job: result });
@@ -209,7 +212,10 @@ export const getDriverHistory = async (req, res) => {
     try {
         const driverId = req.userId;
         const history = await prisma.deliveryJob.findMany({
-            where: { driver_id: driverId, status: 'COMPLETED' },
+            where: { 
+                driver_id: driverId, 
+                status: { in: ['TAKEN', 'COMPLETED'] } 
+            },
             include: {
                 order: {
                     include: {
@@ -217,7 +223,7 @@ export const getDriverHistory = async (req, res) => {
                     }
                 }
             },
-            orderBy: { completed_at: 'desc' }
+            orderBy: { id: 'desc' }
         });
         res.status(200).json(history);
     } catch (error) {

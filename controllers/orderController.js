@@ -517,8 +517,14 @@ export const verifySuccess = async (req, res) => {
             if (!order) throw new Error("Pesanan tidak ditemukan");
             if (order.buyer_id !== buyerId) throw new Error("Anda tidak berhak memverifikasi pesanan ini");
             if (order.status !== 'IN_DELIVERY') throw new Error("Pesanan tidak dalam status pengiriman");
-            if (!order.delivery_job || order.delivery_job.status !== 'COMPLETED') {
-                throw new Error("Kurir belum menyelesaikan pengantaran barang");
+            if (order.delivery_job && order.delivery_job.status !== 'COMPLETED') {
+                await tx.deliveryJob.update({
+                    where: { id: order.delivery_job.id },
+                    data: {
+                        status: 'COMPLETED',
+                        completed_at: now
+                    }
+                });
             }
 
             const updatedOrder = await tx.order.update({
@@ -574,6 +580,9 @@ export const verifySuccess = async (req, res) => {
             });
 
             return updatedOrder;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(200).json({ msg: "Pesanan berhasil dikonfirmasi diterima.", order: result });
@@ -632,6 +641,9 @@ export const verifyFailed = async (req, res) => {
             });
 
             return updatedOrder;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(200).json({ msg: "Laporan kehilangan berhasil dikirim. Dana telah dikembalikan ke dompet Anda.", order: result });
