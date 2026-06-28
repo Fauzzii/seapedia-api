@@ -335,6 +335,9 @@ export const runOverdueCheck = async (req, res) => {
                         data: { status: 'COMPLETED', completed_at: now }
                     });
                 }
+            }, {
+                maxWait: 15000,
+                timeout: 30000
             });
         });
 

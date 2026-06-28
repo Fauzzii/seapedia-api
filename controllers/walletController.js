@@ -73,6 +73,9 @@ export const topupWallet = async (req, res) => {
             });
 
             return updatedWallet;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(200).json({ msg: "Top-up saldo berhasil", wallet: result });

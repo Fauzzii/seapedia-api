@@ -42,6 +42,9 @@ export const createAddress = async (req, res) => {
                 }
             });
             return address;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(201).json({ msg: "Alamat berhasil ditambahkan", address: result });
@@ -84,6 +87,9 @@ export const updateAddress = async (req, res) => {
                 }
             });
             return updated;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(200).json({ msg: "Alamat berhasil diperbarui", address: result });
@@ -121,6 +127,9 @@ export const deleteAddress = async (req, res) => {
                     });
                 }
             }
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(200).json({ msg: "Alamat berhasil dihapus" });

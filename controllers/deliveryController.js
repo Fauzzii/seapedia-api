@@ -76,6 +76,9 @@ export const takeJob = async (req, res) => {
                 driver_id: req.userId,
                 taken_at: now
             };
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(200).json({ msg: "Pekerjaan pengiriman berhasil diambil", job: result });

@@ -336,6 +336,9 @@ export const updateOrderStatus = async (req, res) => {
             }
 
             return result;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(200).json({ msg: "Status pesanan berhasil diperbarui", order: updatedOrder });
@@ -386,6 +389,9 @@ export const processOrder = async (req, res) => {
             });
 
             return updated;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
         });
 
         res.status(200).json({ msg: "Pesanan berhasil diproses, kurir siap menjemput", order: result });
