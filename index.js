@@ -7,9 +7,8 @@ import session from "express-session";
 import morgan from "morgan";
 import cors from 'cors';
 import helmet from 'helmet';
-import prisma from './src/config/index.js';
+import prisma, { corsOptions, getSessionConfig, appConfig } from './src/config/index.js';
 import { initTimeCache } from './src/helpers/time.js';
-import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import { generalLimiter } from './src/middleware/rateLimiter.js';
 import authRoutes from './src/routes/authRoutes.js';
 import userRoutes from './src/routes/userRoutes.js';
@@ -29,16 +28,7 @@ BigInt.prototype.toJSON = function () {
 
 const app = express();
 app.set('trust proxy', 1);
-const PORT = process.env.PORT || 5000;
-
-const store = new PrismaSessionStore(
-    prisma,
-    {
-        checkPeriod: 2 * 60 * 1000,
-        dbRecordIdIsSessionId: true,
-        dbRecordIdFunction: undefined,
-    }
-);
+const PORT = appConfig.port;
 
 (async () => {
     try {
@@ -51,40 +41,12 @@ const store = new PrismaSessionStore(
     }
 })();
 
-const corsOptions = {
-    origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        const allowed = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'];
-        if (allowed.includes(origin) || origin.endsWith('.vercel.app') || origin.startsWith('http://localhost:')) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    optionsSuccessStatus: 200
-};
-
-app.use(helmet({
-    contentSecurityPolicy: false
-}));
+app.use(helmet(appConfig.helmetOptions));
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: appConfig.jsonLimit }));
 app.use(morgan('dev'));
 app.use(generalLimiter);
-app.use(session({
-    secret: process.env.SESS_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    rolling: true,
-    store: store,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 60 * 60 * 1000
-    }
-}));
+app.use(session(getSessionConfig()));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
