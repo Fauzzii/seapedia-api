@@ -3,9 +3,20 @@ import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-// Per-product curated Unsplash WebP image pools (5 images each)
+const categoryPhotos = {
+    'Sepatu':          [48, 106, 215, 292, 399],
+    'Pakaian':         [64, 103, 177, 244, 316],
+    'Furnitur':        [116, 158, 271, 357, 430],
+    'Elektronik':      [0, 20, 60, 96, 180],
+    'Peralatan Rumah': [145, 200, 237, 333, 428],
+    'Jam Tangan':      [1012, 1011, 1010, 1009, 1008],
+    'Tas':             [404, 407, 408, 411, 416],
+    'Kulkas':          [201, 205, 208, 213, 233],
+    'Barang Mewah':    [1074, 1082, 1080, 1069, 1051],
+    'default':         [10, 11, 12, 13, 14]
+};
+
 const PRODUCT_IMAGES = {
-    // Store 1 - Griya Mode & Furnitur
     'Sepatu Sneakers Pria': [
         'https://images.unsplash.com/photo-1542291344-7f70aa0e15d2?w=600&h=400&fit=crop&fm=webp',
         'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&h=400&fit=crop&fm=webp',
@@ -76,7 +87,6 @@ const PRODUCT_IMAGES = {
         'https://images.unsplash.com/photo-1524055988636-436cfa46e59e?w=600&h=400&fit=crop&fm=webp',
         'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=600&h=400&fit=crop&fm=webp',
     ],
-    // Store 2 - Nusantara Lifestyle Store
     'Kulkas 2 Pintu 200L': [
         'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=600&h=400&fit=crop&fm=webp',
         'https://images.unsplash.com/photo-1558617327-a16d3e787571?w=600&h=400&fit=crop&fm=webp',
@@ -149,12 +159,18 @@ const PRODUCT_IMAGES = {
     ],
 };
 
-// Returns 1-5 image objects randomly chosen from the product's specific pool
-function getProductImages(productName) {
+function getProductImageUrl(category) {
+    const pool = categoryPhotos[category] || categoryPhotos['default'];
+    const photoId = pool[Math.floor(Math.random() * pool.length)];
+    return `https://picsum.photos/id/${photoId}/600/400.webp`;
+}
+
+function getProductImages(productName, category) {
     const pool = PRODUCT_IMAGES[productName];
-    if (!pool) return [{ image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=400&fit=crop&fm=webp' }];
+    if (!pool) {
+        return [{ image_url: getProductImageUrl(category) }];
+    }
     const count = Math.floor(Math.random() * 5) + 1;
-    // Shuffle and take `count` items
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count).map(url => ({ image_url: url }));
 }
@@ -195,7 +211,7 @@ async function main() {
             where: { email: u.email }
         });
         const roleRecord = roleRecords[u.role];
-        
+
         if (!user) {
             user = await prisma.user.create({
                 data: {
@@ -328,12 +344,11 @@ async function main() {
                     stock: p.stock,
                     category: p.category,
                     images: {
-                        create: getProductImages(p.name)
+                        create: getProductImages(p.name, p.category)
                     }
                 }
             });
             console.log(`Created product in Griya Mode & Furnitur: ${p.name}`);
-        }
         }
     }
 
@@ -364,7 +379,7 @@ async function main() {
                     stock: p.stock,
                     category: p.category,
                     images: {
-                        create: getProductImages(p.name)
+                        create: getProductImages(p.name, p.category)
                     }
                 }
             });
