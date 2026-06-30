@@ -3,6 +3,26 @@ import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+// Photo ID pools per category using picsum.photos (real WebP images)
+const categoryPhotos = {
+    'Sepatu':          [48, 106, 215, 292, 399],
+    'Pakaian':         [64, 103, 177, 244, 316],
+    'Furnitur':        [116, 158, 271, 357, 430],
+    'Elektronik':      [0, 20, 60, 96, 180],
+    'Peralatan Rumah': [145, 200, 237, 333, 428],
+    'Jam Tangan':      [1012, 1011, 1010, 1009, 1008],
+    'Tas':             [404, 407, 408, 411, 416],
+    'Kulkas':          [201, 205, 208, 213, 233],
+    'Barang Mewah':    [1074, 1082, 1080, 1069, 1051],
+    'default':         [10, 11, 12, 13, 14]
+};
+
+function getProductImageUrl(category) {
+    const pool = categoryPhotos[category] || categoryPhotos['default'];
+    const photoId = pool[Math.floor(Math.random() * pool.length)];
+    return `https://picsum.photos/id/${photoId}/600/400.webp`;
+}
+
 async function main() {
     console.log('Start seeding...');
 
@@ -146,16 +166,16 @@ async function main() {
     }
 
     const productsStore1 = [
-        { name: 'Nasi Goreng Spesial', description: 'Nasi goreng dengan telur mata sapi dan sosis ayam panggang', price: 25000.00, stock: 50, category: 'Kuliner' },
-        { name: 'Ayam Goreng Mentega', description: 'Ayam goreng saus mentega harum manis gurih khas resep kuno', price: 30000.00, stock: 35, category: 'Kuliner' },
-        { name: 'Kemeja Batik Premium', description: 'Kemeja batik katun halus motif modern dengan potongan fit', price: 150000.00, stock: 20, category: 'Fesyen' },
-        { name: 'Jaket Parka Outdoor', description: 'Jaket parka anti angin dan air, cocok untuk bertualang luar ruangan', price: 250000.00, stock: 15, category: 'Fesyen' },
-        { name: 'Sepatu Sneakers Canvas', description: 'Sepatu sneakers bahan kanvas nyaman dipakai untuk aktivitas kasual harian', price: 180000.00, stock: 25, category: 'Fesyen' },
-        { name: 'Kaos Polos Cotton Combed', description: 'Kaos katun adem menyerap keringat dengan pilihan warna minimalis', price: 45000.00, stock: 100, category: 'Fesyen' },
-        { name: 'Earphone TWS Wireless', description: 'TWS dengan konektivitas bluetooth stabil dan dentuman bass mantap', price: 120000.00, stock: 40, category: 'Elektronik' },
-        { name: 'Powerbank 10000mAh', description: 'Penyimpan daya portable pengisian cepat dengan sistem proteksi ganda', price: 95000.00, stock: 50, category: 'Elektronik' },
-        { name: 'Mouse Wireless Silent', description: 'Mouse tanpa kabel dengan fitur klik senyap tidak mengganggu sekitar', price: 65000.00, stock: 60, category: 'Elektronik' },
-        { name: 'Keyboard Mechanical RGB', description: 'Papan ketik mekanikal tactile berlampu latar warna-warni memikat', price: 350000.00, stock: 15, category: 'Elektronik' }
+        { name: 'Sepatu Sneakers Pria', description: 'Sepatu sneakers bahan kanvas premium nyaman untuk aktivitas kasual harian', price: 180000.00, stock: 25, category: 'Sepatu' },
+        { name: 'Sepatu Boots Kulit Asli', description: 'Sepatu boots kulit sapi asli tahan lama dengan jahitan tangan berkualitas', price: 450000.00, stock: 12, category: 'Sepatu' },
+        { name: 'Sepatu Lari Running Pro', description: 'Sepatu lari dengan bantalan EVA ringan dan sol karet anti selip', price: 320000.00, stock: 18, category: 'Sepatu' },
+        { name: 'Kemeja Katun Premium', description: 'Kemeja katun combed halus motif polos cocok untuk formal dan kasual', price: 150000.00, stock: 40, category: 'Pakaian' },
+        { name: 'Jaket Bomber Pria', description: 'Jaket bomber tebal bahan parasut tahan angin dengan desain sporty modern', price: 275000.00, stock: 20, category: 'Pakaian' },
+        { name: 'Meja Kerja Minimalis', description: 'Meja kerja kayu MDF tebal 18mm dengan laci samping dan permukaan anti gores', price: 650000.00, stock: 8, category: 'Furnitur' },
+        { name: 'Kursi Gaming Ergonomis', description: 'Kursi gaming dengan sandaran lumbar adjustable dan armrest 4D nyaman', price: 1200000.00, stock: 5, category: 'Furnitur' },
+        { name: 'Monitor LED 24 Inch', description: 'Monitor IPS Full HD 75Hz dengan panel anti-glare dan port HDMI/VGA', price: 1800000.00, stock: 7, category: 'Elektronik' },
+        { name: 'Kipas Angin Standing Fan', description: 'Kipas berdiri 16 inch 3 kecepatan dengan timer otomatis dan remote', price: 285000.00, stock: 15, category: 'Peralatan Rumah' },
+        { name: 'Setrika Uap Otomatis', description: 'Setrika uap 2200W peluncur uap turbo dengan alas keramik anti lengket', price: 195000.00, stock: 22, category: 'Peralatan Rumah' }
     ];
 
     for (const p of productsStore1) {
@@ -173,7 +193,7 @@ async function main() {
                     category: p.category,
                     images: {
                         create: [
-                            { image_url: `https://placehold.co/600x400?text=${encodeURIComponent(p.name)}` }
+                            { image_url: getProductImageUrl(p.category) }
                         ]
                     }
                 }
@@ -183,16 +203,16 @@ async function main() {
     }
 
     const productsStore2 = [
-        { name: 'Roti Coklat Klasik', description: 'Roti manis empuk bertabur coklat lumer premium melimpah', price: 10000.00, stock: 80, category: 'Kuliner' },
-        { name: 'Croissant Keju Crispy', description: 'Croissant renyah berlapis dengan taburan keju cheddar gurih', price: 18000.00, stock: 30, category: 'Kuliner' },
-        { name: 'Gelas Tumblr Stainless', description: 'Tumblr tahan panas dan dingin hingga 12 jam, ramah lingkungan', price: 75000.00, stock: 45, category: 'Peralatan Rumah' },
-        { name: 'Lampu Meja Belajar LED', description: 'Lampu belajar dengan 3 tingkat kecerahan aman untuk mata anak', price: 55000.00, stock: 30, category: 'Peralatan Rumah' },
-        { name: 'Set Wajan Teflon Set', description: 'Wajan teflon anti lengket food grade isi 3 pcs berbagai ukuran', price: 125000.00, stock: 20, category: 'Peralatan Rumah' },
-        { name: 'Box Container Plastik 30L', description: 'Kontainer plastik kokoh serbaguna dengan roda pemindah praktis', price: 85000.00, stock: 35, category: 'Logistik' },
-        { name: 'Bubble Wrap Roll 50m', description: 'Gulungan bubble wrap tebal pelindung paket barang pecah belah', price: 45000.00, stock: 50, category: 'Logistik' },
-        { name: 'Lakban Coklat 2 Inch', description: 'Lakban coklat dengan daya rekat ekstra kuat untuk packing karton', price: 12000.00, stock: 200, category: 'Logistik' },
-        { name: 'Jam Tangan Minimalis', description: 'Jam tangan kulit asli dengan desain elegan bergaya formal mewah', price: 1200000.00, stock: 5, category: 'Barang Mewah' },
-        { name: 'Cincin Perak Sterling 925', description: 'Cincin perak murni berhias zirkonia mewah anti karat mengkilap', price: 45000.00, stock: 10, category: 'Barang Mewah' }
+        { name: 'Kulkas 2 Pintu 200L', description: 'Kulkas dua pintu kapasitas 200 liter dengan fitur No Frost dan laci buah', price: 3200000.00, stock: 4, category: 'Kulkas' },
+        { name: 'Kulkas Mini 1 Pintu', description: 'Kulkas mini kapasitas 65L cocok untuk kamar kos atau kantor kecil', price: 850000.00, stock: 10, category: 'Kulkas' },
+        { name: 'Jam Tangan Analog Pria', description: 'Jam tangan dengan tali kulit asli, mesin Quartz Jepang dan kaca mineral', price: 1200000.00, stock: 6, category: 'Jam Tangan' },
+        { name: 'Jam Tangan Sport Digital', description: 'Jam tangan digital tahan air 50m dengan stopwatch, alarm, dan backlight', price: 350000.00, stock: 14, category: 'Jam Tangan' },
+        { name: 'Tas Ransel Laptop 15 Inch', description: 'Tas ransel bahan polyester tebal dengan ruang laptop dan kompartemen organizer', price: 280000.00, stock: 20, category: 'Tas' },
+        { name: 'Tas Selempang Kulit Pria', description: 'Tas selempang kulit sintetis premium dengan resleting anti karat', price: 195000.00, stock: 18, category: 'Tas' },
+        { name: 'Lemari Pakaian 3 Pintu', description: 'Lemari kayu solid 3 pintu geser cermin dengan rak dalam 4 susun', price: 1800000.00, stock: 3, category: 'Furnitur' },
+        { name: 'Rak Buku Besi Industrial', description: 'Rak buku besi 5 tingkat dengan papan kayu pinus, desain industrial modern', price: 480000.00, stock: 9, category: 'Furnitur' },
+        { name: 'Sepatu Formal Pantofel Pria', description: 'Sepatu pantofel kulit sintetis mengkilap untuk kebutuhan formal dan kantor', price: 265000.00, stock: 15, category: 'Sepatu' },
+        { name: 'Sepatu Sandal Casual Pria', description: 'Sandal kasual bahan EVA ringan anti selip cocok untuk aktivitas santai', price: 95000.00, stock: 30, category: 'Sepatu' }
     ];
 
     for (const p of productsStore2) {
@@ -210,7 +230,7 @@ async function main() {
                     category: p.category,
                     images: {
                         create: [
-                            { image_url: `https://placehold.co/600x400?text=${encodeURIComponent(p.name)}` }
+                            { image_url: getProductImageUrl(p.category) }
                         ]
                     }
                 }
