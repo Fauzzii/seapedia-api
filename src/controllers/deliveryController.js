@@ -1,6 +1,6 @@
-import prisma from '../config/prisma.js';
+import prisma from '../config/index.js';
 import { handleError } from '../utils/errorHandler.js';
-import { getCurrentTime } from '../utils/timeHelper.js';
+import { getCurrentTime } from '../helpers/time.js';
 
 export const getAvailableJobs = async (req, res) => {
     try {

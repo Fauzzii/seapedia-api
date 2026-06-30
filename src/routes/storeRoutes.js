@@ -1,7 +1,7 @@
 import express from 'express';
 import { getStores, getStoreById, createStore, updateSellerStore, deleteStore } from '../controllers/storeController.js';
 import { verifyUser, requireActiveRole } from '../middleware/AuthUser.js';
-import { validateStore } from '../middleware/validators/storeValidator.js';
+import { validateStore } from '../validators/storeValidator.js';
 
 const router = express.Router();
 

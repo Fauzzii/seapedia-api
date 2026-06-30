@@ -1,4 +1,4 @@
-import prisma from "../config/prisma.js";
+import prisma from "../config/index.js";
 import bcrypt from "bcrypt";
 import { handleError } from "../utils/errorHandler.js";
 

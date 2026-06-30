@@ -13,7 +13,7 @@ import {
     returnOrder
 } from '../controllers/orderController.js';
 import { verifyUser, requireActiveRole } from '../middleware/AuthUser.js';
-import { validateCheckout } from '../middleware/validators/orderValidator.js';
+import { validateCheckout } from '../validators/orderValidator.js';
 
 const router = express.Router();
 

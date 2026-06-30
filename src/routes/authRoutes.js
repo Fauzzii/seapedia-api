@@ -5,7 +5,7 @@ import { verifyUser } from "../middleware/AuthUser.js";
 import { 
     validateLogin, 
     validateRegister 
-} from "../middleware/validators/userValidator.js";
+} from "../validators/userValidator.js";
 import { authLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();

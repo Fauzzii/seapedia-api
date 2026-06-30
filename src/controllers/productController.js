@@ -1,4 +1,4 @@
-import prisma from '../config/prisma.js';
+import prisma from '../config/index.js';
 import { handleError } from '../utils/errorHandler.js';
 import { sanitizeText } from '../utils/sanitizer.js';
 

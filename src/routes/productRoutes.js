@@ -1,7 +1,7 @@
 import express from 'express';
 import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, getSellerProducts, getProductReviews, createProductReview } from '../controllers/productController.js';
 import { verifyUser, requireActiveRole } from '../middleware/AuthUser.js';
-import { validateProduct } from '../middleware/validators/productValidator.js';
+import { validateProduct } from '../validators/productValidator.js';
 
 const router = express.Router();
 

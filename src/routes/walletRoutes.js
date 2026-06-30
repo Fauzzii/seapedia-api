@@ -1,7 +1,7 @@
 import express from 'express';
 import { getWallet, getWalletTransactions, topupWallet } from '../controllers/walletController.js';
 import { verifyUser } from '../middleware/AuthUser.js';
-import { validateTopup } from '../middleware/validators/walletValidator.js';
+import { validateTopup } from '../validators/walletValidator.js';
 
 const router = express.Router();
 

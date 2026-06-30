@@ -1,7 +1,7 @@
-import prisma from "../config/prisma.js";
+import prisma from "../config/index.js";
 import bcrypt from "bcrypt";
 import { handleError } from "../utils/errorHandler.js";
-import { getCurrentTime } from "../utils/timeHelper.js";
+import { getCurrentTime } from "../helpers/time.js";
 
 export const getUsers = async (req, res) => {
     try {

@@ -1,7 +1,7 @@
 import express from "express";
 import { getUsers, getUserById, createUser, updateUser, deleteUser, getDashboardSummary } from "../controllers/userController.js";
 import { verifyUser, adminOnly } from "../middleware/AuthUser.js";
-import { validateRegister, validateUpdateUser } from "../middleware/validators/userValidator.js";
+import { validateRegister, validateUpdateUser } from "../validators/userValidator.js";
 
 const router = express.Router();
 

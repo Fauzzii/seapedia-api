@@ -1,7 +1,7 @@
-import prisma from '../config/prisma.js';
+import prisma from '../config/index.js';
 import { handleError } from '../utils/errorHandler.js';
 import bcrypt from 'bcrypt';
-import { getCurrentTime, updateTimeCache } from '../utils/timeHelper.js';
+import { getCurrentTime, updateTimeCache } from '../helpers/time.js';
 
 export const getMonitoringUsers = async (req, res) => {
     try {
