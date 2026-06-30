@@ -74,7 +74,26 @@ export const getMonitoringOrders = async (req, res) => {
         const page = parseInt(req.query.page) || 0;
         const limit = parseInt(req.query.limit) || 0;
         let queryOptions = {
-            include: { buyer: true, store: true, order_items: true }
+            include: { 
+                buyer: true, 
+                store: true, 
+                order_items: { 
+                    include: { 
+                        product: { 
+                            include: { 
+                                images: true 
+                            } 
+                        } 
+                    } 
+                }, 
+                order_status_histories: { 
+                    orderBy: { created_at: 'desc' } 
+                },
+                delivery_job: { 
+                    include: { driver: true } 
+                } 
+            },
+            orderBy: { created_at: 'desc' }
         };
         if (page > 0 && limit > 0) {
             queryOptions.skip = (page - 1) * limit;
