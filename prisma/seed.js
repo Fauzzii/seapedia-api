@@ -135,34 +135,34 @@ async function main() {
 
     const seller1 = userRecords['seller1@example.com'];
     let store1 = await prisma.store.findUnique({
-        where: { store_name: 'Toko Enak' }
+        where: { store_name: 'Griya Mode & Furnitur' }
     });
     if (!store1) {
         store1 = await prisma.store.create({
             data: {
                 seller_id: seller1.id,
-                store_name: 'Toko Enak',
-                description: 'Toko catering lezat, fesyen trendi, dan kebutuhan harian terlengkap',
+                store_name: 'Griya Mode & Furnitur',
+                description: 'Toko sepatu, pakaian, furnitur, elektronik, dan peralatan rumah berkualitas',
                 address_detail: 'Jl. Mawar No. 123, Jakarta'
             }
         });
-        console.log('Created store: Toko Enak');
+        console.log('Created store: Griya Mode & Furnitur');
     }
 
     const seller2 = userRecords['seller2@example.com'];
     let store2 = await prisma.store.findUnique({
-        where: { store_name: 'Bob Bakery' }
+        where: { store_name: 'Nusantara Lifestyle Store' }
     });
     if (!store2) {
         store2 = await prisma.store.create({
             data: {
                 seller_id: seller2.id,
-                store_name: 'Bob Bakery',
-                description: 'Aneka kue, roti panggang segar, gadget keren dan peralatan rumah',
+                store_name: 'Nusantara Lifestyle Store',
+                description: 'Kulkas, jam tangan, tas, furnitur, dan sepatu pilihan untuk gaya hidup modern',
                 address_detail: 'Jl. Melati No. 45, Bandung'
             }
         });
-        console.log('Created store: Bob Bakery');
+        console.log('Created store: Nusantara Lifestyle Store');
     }
 
     const productsStore1 = [
@@ -198,7 +198,7 @@ async function main() {
                     }
                 }
             });
-            console.log(`Created product in Toko Enak: ${p.name}`);
+            console.log(`Created product in Griya Mode & Furnitur: ${p.name}`);
         }
     }
 
@@ -235,7 +235,7 @@ async function main() {
                     }
                 }
             });
-            console.log(`Created product in Bob Bakery: ${p.name}`);
+            console.log(`Created product in Nusantara Lifestyle Store: ${p.name}`);
         }
     }
 
